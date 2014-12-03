@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset=utf-8>
+    <title>6600 Programming Assignment</title>
+    <!--<link href="style.css" rel="stylesheet"></link>-->
+    <!--<script src="script.js"></script>-->
+    <!--<style></style>-->
+</head>
+<body>
+  <!-- content -->
+  <div>
+  <canvas id="cvs" width="600" height="210">Sorry, your broswer doesn't support HTML5.</canvas>
+  </div>
+  <div>
+  <canvas id="preview" width="600" height="210">Sorry, your broswer doesn't support HTML5.</canvas>
+  </div>
+  <div>
+  <h3 id="gameDesc"></h3>
+  </div>
+  <div>
+  <textarea id="log" cols="50" rows="15" style="font-size:25px"></textarea>
+  </div>
+<script type="text/javascript">
+  var VK_UP = 38; var VK_DOWN = 40; var VK_RIGHT = 39; var VK_LEFT = 37; var VK_BK = 13;
+  var keyDown = false;
+  var positionX = 0;
+  var positionY = 0;
+  var width = 100;
+  var lineWidth = 5;
+  var marginWidth = 4;
+  var edgeWidth = width + lineWidth;
+  var shadowWidth = width - marginWidth;
+  var ctx, cvs, pre, prectx;
+  var numTiles, valueList, initA, initB; 
+  var runMode, method, numPlayer;
+  var andOrResults;
+  var methodMap = new Map();
+  var turn = 0;
+
+  function getQueryString(name) {
+    var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+    var r = window.location.search.substr(1).match(reg);
+    if (r != null) return unescape(r[2]); return null;
+  }
+
+  window.onload = function() {
+    methodMap.set(0, "H1");
+    methodMap.set(1, "H2");
+    methodMap.set(2, "And-Or Tree");
+    methodMap.set(3, "MaxMini Algorithm");
+
+    runMode = getQueryString("runMode");
+    method = parseInt(getQueryString("method"));
+    numPlayer = parseInt(getQueryString("numPlayer"));
+    document.getElementById("gameDesc").innerHTML="Run Mode = " + getQueryString("runMode") + ", Game Function = " + methodMap.get(parseInt(getQueryString("method")));
+    // Decide which game mode
+    if (runMode == "STEP") {
+      window.addEventListener('keydown', doKeyDown);
+      cvs.addEventListener('keydown', doKeyDown);
+      cvs.focus();
+    }
+    else if (runMode == "RUN") {
+      while (moveInterface() != 1);
+    }
+  }
+
+  function doKeyDown(e){
+    var keyID = e.keyCode ? e.keyCode :e.which;
+    if (keyID == VK_RIGHT) {
+      if(positionX==numTiles-1) return null;
+      clearRect(ctx, positionX, positionY);
+      drawRect(ctx, valueList, positionX, positionY, positionY==0?"red":"blue");      
+      positionX += 1;
+      shadowRect(ctx, positionX, positionY);
+      showValue(ctx, valueList, positionX, positionY);
+      updatePreview(positionX, positionY);
+    }
+    else if (keyID == VK_UP) {
+      if(positionY==0) return null;
+    
+      drawRect(ctx, valueList, positionX, positionY, positionY==0?"red":"blue");      
+      positionY -= 1;
+      shadowRect(ctx, positionX, positionY);
+      showValue(ctx, valueList, positionX, positionY);
+    }
+    else if (keyID == VK_LEFT) {
+      if(positionX==0) return null;
+      clearRect(ctx, positionX, positionY);
+      drawRect(ctx, valueList, positionX, positionY, positionY==0?"red":"blue");      
+      positionX -= 1;
+      shadowRect(ctx, positionX, positionY);
+      showValue(ctx, valueList, positionX, positionY);
+      updatePreview(positionX, positionY);
+    }
+    else if (keyID == VK_DOWN) {
+      if ((positionY==0)&&(numPlayer==1)) return null;
+      clearRect(ctx, positionX, positionY);
+      drawRect(ctx, valueList, positionX, positionY, positionY==0?"red":"blue");      
+      positionY += 1;
+      shadowRect(ctx, positionX, positionY);
+      showValue(ctx, valueList, positionX, positionY);
+    }
+    else if (keyID == VK_BK) {
+      if (valueList[getPos(positionX, positionY)] == 0) return null;
+      moveInterface();
+    } 
+  }
+
+  function moveInterface() {
+    if (numPlayer == 1) {
+      addText("Player A chooses (" + positionX + ", " + positionY + ")\n");
+      pressBK(ctx, valueList, positionX, positionY);
+      if (method == 0) {
+      computeH1(1);
+      }
+      else if (method == 2) {
+      computeH1(1);
+      }
+      checkResults();
+      positionX = 0; positionY = 0;
+      updatePreview(positionX, positionY);
+    }
+    else {
+      if (runMode == "STEP") addText("The human player wants to chooses (" + positionX + ", " + positionY + ")\n");
+      if (method == 0) {
+        computeH1(turn);
+      }
+      else if (method == 2) {
+        if (andOrResults == -1) {
+          computeH1(turn);
+        }
+        else if (turn%2 == 0) {
+          positionX = andOrResults[1];
+          positionY = 0;
+          addText("Player A chooses (" + positionX + ", " + positionY + ")\n");
+          pressBK(ctx, valueList, positionX, positionY); 
+        }
+        else {
+          var i = computeH1(turn);
+          andOrResults = andOrResults[0][i];
+        }
+      }
+      turn = (turn+1)%2;
+      if (checkResults() == 1) return 1;
+      positionX = 0; positionY = 0;
+      updatePreview(positionX, positionY);
+    }
+  }
+
+  function checkResults() {
+    var sum0 = computeWholeNumber(valueList, 0);
+    var sum1 = computeWholeNumber(valueList, 1);
+    var sum = sumArray(valueList);
+    if(sum0 == sum) {
+      addText("Player A win the game!\n");
+      window.removeEventListener('keydown', doKeyDown, false);
+      cvs.removeEventListener('keydown', doKeyDown, false);
+      return 1;
+    }
+    else if (sum1 == sum) {
+      addText("Player B win the game!\n");
+      window.removeEventListener('keydown', doKeyDown, true);
+      cvs.removeEventListener('keydown', doKeyDown, true);
+      return 1;
+    }
+  return 0;
+  }
+
+  function pressBK(context, arrayList, positionX, positionY) {
+    spreadValue(arrayList, positionX, positionY);
+    for (i = 0; i < numTiles; i++) {
+      clearRect(context, i, 0);
+      clearRect(context, i, 1);
+    }
+    if(context == ctx) shadowRect(context, 0,0);
+    for (i = 0; i < numTiles; i++) {
+      drawRect(context, valueList, i, 0, "red");
+      drawRect(context, valueList, i, 1, "blue");
+    }
+    positionX = 0;
+    positionY = 0;
+  }
+
+  function drawRect(ctx, arrayList, positionX, positionY, color) {
+    ctx.strokeStyle=color;
+    if (positionX != 0) {
+      ctx.strokeRect(positionX*edgeWidth + 1 - 2.5, positionY*edgeWidth + 1, width, width);
+    }
+    else {
+      ctx.strokeRect(positionX*edgeWidth + 1, positionY*edgeWidth + 1, width, width);
+    }
+    showValue(ctx, arrayList, positionX, positionY);
+  }
+  function clearRect(ctx, positionX, positionY) {
+    ctx.clearRect(positionX*edgeWidth + 1, positionY*edgeWidth + 1, width, width);
+  }
+
+  function shadowRect(ctx, positionX, positionY) {
+    ctx.fillStyle="Grey";
+    if (positionX != 0) {
+    ctx.fillRect(positionX*edgeWidth + marginWidth - 2.5, positionY*edgeWidth + marginWidth, shadowWidth, shadowWidth);
+    }
+    else {
+      ctx.fillRect(positionX*edgeWidth + marginWidth, positionY*edgeWidth + marginWidth, shadowWidth, shadowWidth);
+    }
+  }
+
+  function showValue(context, arrayList, positionX, positionY) {
+    context.fillStyle = "Black";
+    context.fillText(arrayList[getPos(positionX, positionY)], positionX*edgeWidth + edgeWidth * 1/3, positionY*edgeWidth + edgeWidth * 1/2);
+  }
+
+  function getPos(positionX, positionY) {
+    if (positionY == 0) return positionX;
+    else if (positionY == 1) return 2*numTiles-1-positionX;
+  }
+
+  function startCanvas() {
+    numTiles = parseInt(getQueryString("numTiles"));
+    initA=getQueryString("valueA").split('+');
+    initB=getQueryString("valueB").split('+');
+    valueList = [];
+
+    cvs = document.getElementById("cvs");
+    pre = document.getElementById("preview");
+    ctx = cvs.getContext('2d');
+    prectx = pre.getContext('2d');
+    ctx.font="30px Arial";
+    prectx.font="30px Arial";
+    ctx.lineWidth=5;
+    prectx.lineWidth=5;
+    shadowRect(ctx, 0,0);
+    for (i = 0; i < numTiles; i++) {
+      valueList[getPos(i,0)] = parseInt(initA[i]);
+      valueList[getPos(i,1)] = parseInt(initB[i]);
+    }
+
+    for (i = 0; i < numTiles; i++) {
+      drawRect(ctx, valueList, i, 0, "red");
+      drawRect(ctx, valueList, i, 1, "blue");
+    }
+    updatePreview(positionX, positionY);
+    method = parseInt(getQueryString("method"));
+    if (method == 2) {
+      andOrResults = andOrTree(valueList);
+      addText("And-Or Search Tree Solution:\n");
+      interpretAndOrTree(andOrResults, 1);
+    }
+    addText("Play Log:\n");
+  }
+
+  function computeWholeNumber(valueList, line) {
+    var before = 0;
+    var i;
+    for (i = 0; i < numTiles; i++) {
+      before += valueList[getPos(i, line)];
+    }
+    return before;
+  }
+
+  function sumArray(tempArray) {
+    var i, sum;
+    sum = 0;
+    for (i = 0; i < tempArray.length; i++) {
+      sum+= tempArray[i];
+    }
+    return sum;
+  }
+  function spreadValue(valueList, positionX, positionY) {
+    var finalPos = getPos(positionX, positionY);
+    var disValue = valueList[finalPos];
+    var i;
+    valueList[finalPos] = 0;
+    for (i = 0; i < disValue; i++) {
+      valueList[(++finalPos)%(2*numTiles)] += 1;
+    }
+  }
+
+  function computeH1(line) {
+    var before=computeWholeNumber(valueList, line);
+    var optValue = 10000;
+    var optPosition = 0;
+    for (i = 0; i < numTiles; i++) {
+
+      var temp_arr = valueList.slice();
+
+      if (temp_arr[getPos(i, line)] == 0) continue;
+      spreadValue(temp_arr, i, line);
+      var temp = computeWholeNumber(temp_arr, line);
+      if (optValue > Math.abs(temp - before)) {
+        optValue = Math.abs(temp - before);
+        optPosition = i;
+      }
+    }    
+    if (numPlayer == 1)
+      addText("Player B chooses (" + optPosition + ", 1)\n");
+    else if (turn == 0) {
+      addText("Player A chooses (" + optPosition + ", " + line + ")\n");
+    } else {
+      addText("Player B chooses (" + optPosition + ", " + line + ")\n");
+    }
+    pressBK(ctx, valueList, optPosition, line);
+    return optPosition;
+  }
+  function compareArray(arrayA, arrayB) {
+    var i
+    for (i = 0; i < arrayA.length; i++) {
+      if (arrayA[i]!=arrayB[i]) return false;
+    }
+    return true;
+  }
+  var first = 0;
+  var second = 1;
+  function andOrTree(initState) {
+    var path = new Array();
+    return orSearch(initState, path);
+  }
+
+  function orSearch(state, path) {
+    if (computeWholeNumber(state, first) == sumArray(valueList)) return 888;
+    var i = 0;
+    console.log(path.length);
+    for (i = 0; i < path.length; i++) {
+      if (compareArray(path[i], state)) return -1;
+    }
+    for (i = 0; i < numTiles; i++) {
+      var temp_arr = state.slice();
+      if (temp_arr[getPos(i, first)] == 0) continue;
+      spreadValue(temp_arr, i, first);
+      path.push(state);
+      var plan = andSearch(temp_arr, path);
+      if (plan != -1) {
+        plan.push(i);
+        return plan;     
+       }
+    }
+    return -1;
+  }
+  function andSearch(state, path) {
+    var i;
+    var andPlan = new Array();
+    var plan = new Array();
+    for (i = 0; i < numTiles; i++) {
+      var temp_arr = state.slice();
+      if (temp_arr[getPos(i, second)] == 0) {
+        andPlan.push(0);
+        continue;
+      }
+      spreadValue(temp_arr, i, second);
+      var plan_temp = orSearch(temp_arr, path);
+      if (plan_temp == -1) return -1;
+      andPlan.push(plan_temp);
+    }
+    plan.push(andPlan);
+    return plan;
+  }
+
+  function addText(text) {
+    var textArea = document.getElementById("log").value+=text;
+  }
+
+  function interpretAndOrTree(results, level) {
+    if (results == -1) {
+      addText('There is no solution for And-Or Search Alogithm\nPlayers will use H1 method to play the game\n');
+      return null;
+    }
+    var i;
+    addText("Level " + level + ": Player A chooses (" + results[1] + ", " + first + ")\n");
+    for ( i = 0;  i < results[0].length; i++) {
+      if (Array.isArray(results[0][i])) {
+        addText("Level " + (level+1) + ": If Player B chooses (" + i + ", " + second + ") ");
+        interpretAndOrTree(results[0][i], level+2);
+      }
+      else if (results[0][i] == 888) addText("Level " + (level+1) + ": Player B chooses (0, " + second + ")\nPlayer A win!\n");
+    }
+  }
+  function updatePreview(positionX, positionY) {
+
+    previewArray = valueList.slice();
+    spreadValue(previewArray, positionX, positionY);
+   
+    for (i = 0; i < numTiles; i++) {
+      clearRect(prectx, i, 0);
+      clearRect(prectx, i, 1);
+    }
+    for (i = 0; i < numTiles; i++) {
+      drawRect(prectx, previewArray, i, 0, "red");
+      drawRect(prectx, previewArray, i, 1, "blue");
+    }
+  }
+
+  startCanvas();
+
+</script>
+
+</body>
+</html>
