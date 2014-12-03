@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset=utf-8>
+    <title>6600 Programming Assignment</title>
+    <!--<link href="style.css" rel="stylesheet"></link>-->
+    <!--<script src="script.js"></script>-->
+    <!--<style></style>-->
+    <script type="text/javascript">
+      function validateForm() {
+        if ((document.forms["myForm"]["numPlayer"].value == "1")&&(document.forms["myForm"]["runMode"].value=="RUN")) {
+        alert("RUN mode can be only used for Computer VS Computer"); 
+        return false;
+        }
+        return true;
+      }
+    </script>
+</head>
+<body>
+  <h1>6600 Programming Assignment</h1>
+  <h3>Students Name: Fang Zhou, Yuanqi Cheng</h3>
+  <form action="main.html" method="get" name="myForm" onsubmit="return validateForm()">
+    <h2>How many tiles per line: <input type="text" name="numTiles" /> </br> 
+    How many pepples for each tile for player A: <input type="text" name="valueA" /> </br>
+    How many pepples for each tile for player B: <input type="text" name="valueB" /> </br>
+    Computer VS Human? <input type="radio" name="numPlayer" value="0"/> Computer VS Computer  <input type="radio" name="numPlayer" value="1"/> Human VS Computer</br>
+    Which mode to play this game: <input type="radio" name="runMode" value="RUN">RUN <input type="radio" name="runMode" value="STEP">STEP </br>
+    Which method does the game use: <input type="radio" name="method" value="0"> H1 <input type="radio" name="method" value="1"> H2 <input type="radio" name="method" value="2"> And-Or Tree <input type="radio" name="method" value="3"> Max or Mini Algorithm </br> </h2>
+    <input type="submit" value="Submit" style="width: 100px; height: 50px; font-size:25px"/>
+  </form>
+</body>
+</html>
