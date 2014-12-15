@@ -1,11 +1,13 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
   <head>
     <meta charset=utf-8>
     <title>6600 Programming Assignment</title>
     <!--<link href="style.css" rel="stylesheet"></link>-->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
     <!--<script src="script.js"></script>-->
     <!--<style></style>-->
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
     <script type="text/javascript">
       function validateForm() {
         if ((document.forms["myForm"]["numPlayer"].value == "1")&&(document.forms["myForm"]["runMode"].value=="RUN")) {
@@ -14,19 +16,179 @@
         }
         return true;
       }
+      
+      $(document).ready(function () {
+        $('#radio1').click(function () {
+          $('#playerAMethod').show('fast');
+          $('#playerBMethod').show('fast');
+          $('#runMode').show('fast');
+          $('#runRadio').click();
+        });    
+        $('#radio2').click(function () {
+          $('#playerAMethod').hide('fast');
+          $('#playerBMethod').show('fast');
+          $('#runMode').hide('fast');
+          $('#stepRadio').click();
+        });    
+        $('#radio3').click(function () {
+          $('#playerAMethod').hide('fast');
+          $('#playerBMethod').hide('fast');
+          $('#runMode').hide('fast');
+          $('#stepRadio').click();
+        });    
+        $("input[name$='method']").click(function() {
+          var mvalue = $(this).val();
+          if (mvalue>=3) {
+            $('#sd1').show('fast');
+          }
+          else {
+            $('#sd1').hide('fast');
+          }
+        });
+        $("input[name$='method1']").click(function() {
+          var mvalue = $(this).val();
+          if (mvalue>=3) {
+            $('#sd2').show('fast');
+          }
+          else {
+            $('#sd2').hide('fast');
+          }
+        });
+      });
     </script>
 </head>
 <body>
-  <h1>6600 Programming Assignment</h1>
-  <h3>Students Name: Fang Zhou, Yuanqi Cheng</h3>
-  <form action="main.html" method="get" name="myForm" onsubmit="return validateForm()">
-    <h2>How many tiles per line: <input type="text" name="numTiles" /> </br> 
-    How many pepples for each tile for player A: <input type="text" name="valueA" /> </br>
-    How many pepples for each tile for player B: <input type="text" name="valueB" /> </br>
-    Computer VS Human? <input type="radio" name="numPlayer" value="0"/> Computer VS Computer  <input type="radio" name="numPlayer" value="1"/> Human VS Computer</br>
-    Which mode to play this game: <input type="radio" name="runMode" value="RUN">RUN <input type="radio" name="runMode" value="STEP">STEP </br>
-    Which method does the game use: <input type="radio" name="method" value="0"> H1 <input type="radio" name="method" value="1"> H2 <input type="radio" name="method" value="2"> And-Or Tree <input type="radio" name="method" value="3"> Max or Mini Algorithm </br> </h2>
-    <input type="submit" value="Submit" style="width: 100px; height: 50px; font-size:25px"/>
+  <div class="navbar navbar-default" role="navigation">
+    <div class="navbar-header">
+     <a class="navbar-brand" href="#">6600 Assignment Project</a>
+    </div>
+    <div class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li class="active"><a href="#">Homepage</a></li>
+        <li><a herf="#">Author: Fang Zhou, Yuanqi Chen</a></li>
+      </ul>
+   </div><!--/.nav-collapse -->
+  </div>
+
+  <form role="form" action="main.html" method="get" style="padding-left:10px;" name="myForm" onsubmit="return validateForm()">
+    <div class="form-group">
+      <label for="tilesPerLine">How many tiles per line:</label>
+      <input type="text" class="span12" name="numTiles" placeholder="Enter numbers">
+    </div> 
+    <div class="form-group">
+      <label for="tilesPerLine">How many pepples for each tile for player A:</label>
+      <input type="text" class="span12" name="valueA" placeholder="Enter numbers">
+    </div> 
+    <div class="form-group">
+      <label for="tilesPerLine">How many pepples for each tile for player B:</label>
+      <input type="text" class="span12" name="valueB" placeholder="Enter numbers">
+    </div> 
+    <label>Computer VS Human? </label>
+    <div class="radio" >
+      <label>
+        <input type="radio" id="radio1" name="numPlayer" value="0" checked>
+        Computer VS Computer 
+      </label>
+      <label>
+        <input type="radio" id="radio2" name="numPlayer" value="1">
+        Human VS Computer 
+      </label>
+      <label>
+        <input type="radio" id="radio3" name="numPlayer" value="2">
+        Human VS Human 
+      </label>
+    </div>
+    <label>Which mode to play this game:</label>
+    <div class="radio">
+      <div id="runMode">
+      <label>
+        <input type="radio" name="runMode" id="runRadio" value="RUN" checked>
+        RUN
+      </label>
+      </div>
+      <label>
+        <input type="radio" name="runMode" id="stepRadio" value="STEP">
+        STEP 
+      </label>
+    </div>
+
+    <div id="playerAMethod">
+      <label>Which method does the player A use: </label>
+      <div class="radio">
+        <label>
+          <input type="radio" name="method" value="0" checked>
+          Heuristic Function 1
+        </label>
+        <label>
+          <input type="radio" name="method" value="1">
+          Heuristic Function 2
+        </label>
+        <label>
+          <input type="radio" name="method" value="2">
+          Old And-Or Search Tree
+        </label>
+        <label>
+          <input type="radio" name="method" value="3">
+          New And-Or Search Tree with H1
+        </label>
+        <label>
+          <input type="radio" name="method" value="4">
+          New And-Or Search Tree with H2
+        </label>
+        <label>
+          <input type="radio" name="method" value="5">
+          MiniMax Algorithm with H1 
+        </label>
+        <label>
+          <input type="radio" name="method" value="6">
+          MiniMax Algorithm with H2 
+        </label>
+        </br>
+        <div id="sd1" style="display: none; padding-top:10px;">
+        Search Depth: <input class="span12" type="text" name="h1Move">
+        </div>
+      </div>
+    </div>
+
+    <div id="playerBMethod">
+      <label>Which method does the player B use: </label>
+      <div class="radio">
+        <label>
+          <input type="radio" name="method1" value="0" checked>
+          Heuristic Function 1
+        </label>
+        <label>
+          <input type="radio" name="method1" value="1">
+          Heuristic Function 2
+        </label>
+        <label>
+          <input type="radio" name="method1" value="2">
+          Old And-Or Search Tree
+        </label>
+        <label>
+          <input type="radio" name="method1" value="3">
+          New And-Or Search Tree with H1
+        </label>
+        <label>
+          <input type="radio" name="method1" value="4">
+          New And-Or Search Tree with H2
+        </label>
+        <label>
+          <input type="radio" name="method1" value="5">
+          MiniMax Algorithm with H1 
+        </label>
+        <label>
+          <input type="radio" name="method1" value="6">
+          MiniMax Algorithm with H2 
+        </label>
+        </br>
+        <div id="sd2" style="display: none; padding-top:10px;">
+        Search Depth:
+        <input class="span12" type="text" name="h2Move">
+        </div>
+      </div>
+    </div>
+   <button type="submit" value="Submit" class="btn btn-lg btn-success">Submit</button>
   </form>
 </body>
-</html>
+</html> 
